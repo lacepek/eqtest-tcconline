@@ -28,7 +28,7 @@ export class EqTest
     }
 
     this.events = config.events ? config.events : {
-      onEnd: () => {}, onStart: () => {}, onLoad: () => {}
+      onEnd: () => {}, onStart: () => {}, onLoad: () => {}, onLoadFail: () => {}
     };
 
     this.time = config.time ? config.time : 1000;
@@ -50,6 +50,10 @@ export class EqTest
       }
     } catch (error) {
       console.error(error);
+      if (this.events.onLoadFail) {
+        this.events.onLoadFail(error);
+      }
+
       return false;
     }
 
@@ -102,8 +106,7 @@ export class EqTest
 
       return true;
     } catch (error) {
-      console.error(error);
-      return false;
+      throw error;
     }
   }
 
@@ -113,8 +116,7 @@ export class EqTest
       this.imageElement.src = image;
       return true;
     } catch (error) {
-      console.error(error);
-      return false;
+      throw error;
     }
   }
 
@@ -127,8 +129,7 @@ export class EqTest
 
       return image;
     } catch (error) {
-      console.error(error);
-      return null;
+      throw error;
     }
   }
 
@@ -164,7 +165,8 @@ export type Config = {
 export type EqTestEvents = {
   onLoad: OnLoadEvent,
   onStart: OnStartEvent,
-  onEnd: OnEndEvent
+  onEnd: OnEndEvent,
+  onLoadFail: OnLoadFailEvent
 }
 
 export type OnLoadEvent = (image: string, error?: any) => void;
@@ -172,3 +174,5 @@ export type OnLoadEvent = (image: string, error?: any) => void;
 export type OnStartEvent = (error?: any) => void;
 
 export type OnEndEvent = (error?: any) => void;
+
+export type OnLoadFailEvent = (error: any) => void;
