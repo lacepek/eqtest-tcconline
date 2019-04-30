@@ -1,16 +1,15 @@
-import { EqTest, Config } from './eqTest';
+import { EqTestComponent, Config } from './eqTest';
 
-export function create(config: Config): void
-{
-  EqTest.create(config);
-}
+export class EqTest {
+  private static idCounter = 0;
+  
+  public static create(config: Config): EqTestComponent {
+    config.id = config.id || this.genereteId();
 
-export async function start(time: number): Promise<boolean>
-{
-  return await EqTest.start(time);
-}
+    return new EqTestComponent(config);
+  }
 
-export async function load(url: string): Promise<boolean>
-{
-  return await EqTest.load(url);
-}
+  private static genereteId(): string {
+    return `eqtest-body-${this.idCounter}`;
+  }
+};

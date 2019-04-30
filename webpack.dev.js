@@ -25,7 +25,7 @@ module.exports = {
         path: path.resolve(__dirname, 'dist'),
         filename: 'eqtest.js',
         libraryTarget: 'var',
-        library: 'EqTest',
+        library: 'EqTestAPI',
     },
     devServer: {
         contentBase: path.resolve(__dirname),

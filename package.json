@@ -15,7 +15,8 @@
 		"build:dev": "webpack --display-error-details --config webpack.dev.js",
 		"build:prod": "webpack --config webpack.prod.js",
 		"build": "npm run build:dev && npm run build:prod",
-		"update": "npm i && npm update"
+		"update": "npm i && npm update",
+		"docs": "typedoc --readme ./README.md --out ./docs --mode modules && touch ./docs/.nojekyll"
 	},
 	"author": "Ladislav Čepek",
 	"license": "ISC",
@@ -32,6 +33,7 @@
 		"uglifyjs-webpack-plugin": "^1.3.0",
 		"webpack": "^4.28.3",
 		"webpack-cli": "^3.2.1",
-		"webpack-dev-server": "^3.1.14"
+		"webpack-dev-server": "^3.1.14",
+		"typedoc": "^0.14.2"
 	}
 }

@@ -1,16 +1,13 @@
-export class EqTest
-{
-  private static parent: HTMLElement;
-  private static body: HTMLElement;
-  private static imageElement: HTMLImageElement;
+export class EqTestComponent {
+  private parent: HTMLElement;
+  private imageElement: HTMLImageElement;
 
-  private static image: string
-  private static url: string;
-  private static time: number;
-  private static events: EqTestEvents;
+  private image: string;
+  private url: string;
+  private time: number;
+  private events: EqTestEvents;
 
-  public static create(config: Config): void
-  {
+  public constructor(config: Config) {
     if (config.parent instanceof HTMLElement) {
       this.parent = config.parent;
     } else {
@@ -18,100 +15,101 @@ export class EqTest
     }
 
     if (this.parent) {
-      this.body = document.createElement('div');
-      this.body.id = 'eqtest-body';
+      const body = document.createElement('div');
+      body.id = config.id;
+      body.className = config.wrapperClassName || '';
 
       this.imageElement = new Image();
+      this.imageElement.className = config.imageClassName || '';
 
-      this.body.appendChild(this.imageElement);
-      this.parent.appendChild(this.body);
+      body.appendChild(this.imageElement);
+      this.parent.appendChild(body);
     }
 
-    this.events = config.events ? config.events : {
-      onEnd: () => {}, onStart: () => {}, onLoad: () => {}, onLoadFail: () => {}
-    };
+    const defaultEvents = { onEnd: () => {}, onStart: () => {}, onLoad: () => {} };
 
-    this.time = config.time ? config.time : 1000;
+    this.events = config.events || defaultEvents;
+
+    this.time = config.time || 1000;
     this.url = config.url;
   }
 
-  public static async load(url?: string): Promise<boolean>
-  {
-    url = url ? url : this.url;
+  public async load(): Promise<boolean> {
     if (!this.parent) {
       return false;
     }
 
     try {
-      this.image = await this.getImage(url);
-      
+      this.image = await this.getImage(this.url);
+
       if (!this.image) {
         return false;
       }
     } catch (error) {
-      console.error(error);
-      if (this.events.onLoadFail) {
-        this.events.onLoadFail(error);
+      if (this.events.onLoad) {
+        this.events.onLoad(null, this, error);
       }
 
       return false;
     }
 
     if (this.events.onLoad) {
-      this.events.onLoad(this.image);
+      this.events.onLoad(this.image, this);
     }
 
     return true;
   }
 
-  public static async start(time?: number): Promise<boolean>
-  {
+  public async start(time?: number): Promise<boolean> {
+    const currentTime = time || this.time;
+
     if (!this.image) {
       return false;
     }
 
     if (this.events.onStart) {
-      this.events.onStart();
+      this.events.onStart(currentTime, this);
     }
 
     const imageShown = await this.showImage(this.image);
 
     if (imageShown) {
-      const timeEnded = await this.wait(time ? time : this.time);
+      const endTime = await this.wait(currentTime);
 
-      if (timeEnded) {
-        this.cleanUp();
+      this.cleanUp();
 
-        return true;
+      if (this.events.onEnd) {
+        this.events.onEnd(endTime, this);
       }
+
+      return true;
     }
 
     return false;
   }
 
-  private static cleanUp(): void
-  {
+  private cleanUp(): void {
     this.imageElement.src = '';
     this.image = null;
-
-    if (this.events.onEnd) {
-      this.events.onEnd();
-    }
   }
 
-  private static async wait(time: number): Promise<boolean>
-  {
+  private async wait(time: number): Promise<number> {
     try {
-      await new Promise((resolve: any) => { setTimeout(() => { resolve(true) }, time) });
+      const startTime = performance.now();
+      const endTime = await new Promise<number>((resolve: (value: number) => void) => {
+        setTimeout(() => {
+          const time = performance.now();
+          resolve(time);
+        }, time);
+      });
 
-      return true;
+      return endTime - startTime;
     } catch (error) {
       throw error;
     }
   }
 
-  private static async showImage(image: string): Promise<boolean>
-  {
+  private async showImage(image: string): Promise<boolean> {
     try {
       this.imageElement.src = image;
       return true;
@@ -120,8 +118,7 @@ export class EqTest
     }
   }
 
-  private static async getImage(url: string): Promise<string>
-  {
+  private async getImage(url: string): Promise<string> {
     const request = new Request(url, { method: 'GET', cache: 'no-store' });
     try {
       const response = await fetch(request);
@@ -133,8 +130,7 @@ export class EqTest
     }
   }
 
-  private static async loadImage(response: Response): Promise<string>
-  {
+  private async loadImage(response: Response): Promise<string> {
     const buffer = await response.arrayBuffer();
     const base64Flag = 'data:image/jpeg;base64, ';
     const base64Image = await this.convertImageToBase64(buffer);
@@ -144,35 +140,34 @@ export class EqTest
     return imageData;
   }
 
-  private static async convertImageToBase64(buffer: ArrayBuffer): Promise<string>
-  {
+  private async convertImageToBase64(buffer: ArrayBuffer): Promise<string> {
     let binary = '';
     const bytes = [].slice.call(new Uint8Array(buffer));
 
-    bytes.forEach((byte: number) => binary += String.fromCharCode(byte));
+    bytes.forEach((byte: number) => (binary += String.fromCharCode(byte)));
 
     return window.btoa(binary);
   }
 }
 
 export type Config = {
-  parent: HTMLElement | string,
-  url: string,
-  time: number,
-  events: EqTestEvents
-}
+  parent: HTMLElement | string;
+  url: string;
+  time: number;
+  events: EqTestEvents;
+  id: string;
+  wrapperClassName?: string;
+  imageClassName?: string;
+};
 
 export type EqTestEvents = {
-  onLoad: OnLoadEvent,
-  onStart: OnStartEvent,
-  onEnd: OnEndEvent,
-  onLoadFail: OnLoadFailEvent
-}
+  onLoad: OnLoadEvent;
+  onStart: OnStartEvent;
+  onEnd: OnEndEvent;
+};
 
-export type OnLoadEvent = (image: string, error?: any) => void;
+export type OnLoadEvent = (image: string, _this: EqTestComponent, error?: any) => void;
 
-export type OnStartEvent = (error?: any) => void;
+export type OnStartEvent = (time: number, _this: EqTestComponent, error?: any) => void;
 
-export type OnEndEvent = (error?: any) => void;
-
-export type OnLoadFailEvent = (error: any) => void;
+export type OnEndEvent = (endTime: number, _this: EqTestComponent, error?: any) => void;

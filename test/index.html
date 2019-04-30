@@ -1,37 +1,60 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
+  <head>
+    <link
+      rel="stylesheet"
+      href="https://use.fontawesome.com/releases/v5.2.0/css/all.css"
+      integrity="sha384-hWVjflwFxL6sNzntih27bfxkr27PmbbK/iSvJ+a4+0owXq79v+lsFkW54bOGbiDQ"
+      crossorigin="anonymous"
+    />
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
+      integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO"
+      crossorigin="anonymous"
+    />
+  </head>
 
-<head>
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.2.0/css/all.css" integrity="sha384-hWVjflwFxL6sNzntih27bfxkr27PmbbK/iSvJ+a4+0owXq79v+lsFkW54bOGbiDQ"
-        crossorigin="anonymous">
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO"
-        crossorigin="anonymous">
-</head>
-
-<body>
-    <div id="eq-test-wrapper" class="container p-3">
-    </div>
+  <body>
+    <div id="eq-test-wrapper" class="container p-3"></div>
 
     <script src="../dist/eqtest.js"></script>
 
     <script>
-        EqTest.create({
-            parent: '#eq-test-wrapper',
-            time: 3000,
-            url: 'https://i.imgur.com/JlqlvNu.jpg',
-            events: {
-                onLoad: (image) => {
-                    console.log('Image loaded');
-                    EqTest.start();
-                },
-                onStart: () => { console.log('Start') },
-                onEnd: () => { console.log('End') },
-                onLoadFail: () => {console.log('Load Failed')}
-            }
+      const events = {
+        onLoad: (image, _this, error) => {
+          if (error) {
+            return console.error('Image Failed to load: ' + error);
+          }
+          console.log('Image loaded');
+          _this.start();
+        },
+        onStart: (time, _this, error) => {
+          if (error) {
+            return console.error(error);
+          }
+          console.log(`Started counter => ${time}ms`);
+        },
+        onEnd: (endTime, _this, error) => {
+          if (error) {
+            return console.error(error);
+          }
+          console.log(`Ended after ${endTime}ms`);
+        }
+      };
+      const parent = '#eq-test-wrapper';
+      const images = ['https://i.imgur.com/JlqlvNu.jpg', 'https://i.imgur.com/zffOuVA.png', 'https://i.imgur.com/a7h7qdq.jpg'];
+
+      for (let i = 0; i < images.length; i++) {
+        const eqTest = EqTestAPI.EqTest.create({
+          parent,
+          time: Math.random() * 3000,
+          url: images[i],
+          events
         });
 
-        EqTest.load();
+        eqTest.load();
+      }
     </script>
-</body>
-
+  </body>
 </html>

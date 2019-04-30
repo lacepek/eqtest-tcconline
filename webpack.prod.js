@@ -28,7 +28,7 @@ module.exports = {
         path: path.resolve(__dirname, 'dist'),
         filename: 'eqtest.min.js',
         libraryTarget: 'var',
-        library: 'EqTest'
+        library: 'EqTestAPI'
     },
     optimization: {
         minimize: true,
